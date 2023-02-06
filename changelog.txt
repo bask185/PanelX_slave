@@ -1,0 +1,4 @@
+PanelX_slave
+v0.0.0   Date/time:2023-02-06 11:43:44.446421
+Project assembled
+
