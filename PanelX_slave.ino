@@ -32,7 +32,6 @@ const uint8_t GPIO[] =
 } ;
 
 const uint8_t nPins = 15 ;
-const uint8_t firstPin = 3 ;
 
 enum i2c_tasks
 {
@@ -96,7 +95,7 @@ Task( setLed, pin, state )
 
 
 //  I2C: command
-#define callTask(x,y,z) case x: x##F(firstPin+ y  , z ); break ;
+#define callTask(x,y,z) case x: x##F(y  , z ); break ;
 void receiveEvent( int nBytes )
 {
     uint8_t  task = Wire.read() ;
@@ -129,7 +128,7 @@ void setup()
 
     const int addressPins = A7 ;
     int sample = analogRead( addressPins ) ;
-    uint8_t myAddress
+    uint8_t myAddress ;
 
     if(      sample >= 100 - 10 && sample <= 100 + 10 ) myAddress = 1 ; // fix me values please
     else if( sample >= 200 - 10 && sample <= 200 + 10 ) myAddress = 2 ;
@@ -156,7 +155,7 @@ void loop()
         
         for( int i = 0 ; i < nPins ; i ++ )
         {
-            input |= digitalRead( firstPin + i ) ;
+            input |= digitalRead( GPIO[i] ) ;
         }
     }
     END_REPEAT
