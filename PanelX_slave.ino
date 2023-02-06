@@ -12,6 +12,25 @@ const int   IS_OUTPUT = 0x80 ; // flag to set output LEDs (needed to ignore read
 uint16_t    iodir ;
 uint16_t    input ;
 
+const uint8_t GPIO[] =
+{
+    3,      // GPIO  1  
+    4,      // GPIO  2
+    5,      // GPIO  3
+    6,      // GPIO  4
+    7,      // GPIO  5
+    8,      // GPIO  6
+    9,      // GPIO  7
+    10,     // GPIO  8
+    11,     // GPIO  9
+    12,     // GPIO 10
+    13,     // GPIO 11
+    A0,     // GPIO 12
+    A1,     // GPIO 13
+    A2,     // GPIO 14
+    A3,     // GPIO 15
+} ;
+
 const uint8_t nPins = 15 ;
 const uint8_t firstPin = 3 ;
 
@@ -32,11 +51,11 @@ Task( setIodir, pin, state )
     if( state )
     {
         iodir |= (1<<pin) ;
-        pinMode( pin, INPUT ) ; // turns of LEDs by default
+        pinMode( GPIO[pin], INPUT ) ; // turns of LEDs by default
     }
     else
     {
-        pinMode( pin, INPUT_PULLUP ) ;
+        pinMode( GPIO[pin], INPUT_PULLUP ) ;
     }    
 }
 
@@ -45,12 +64,12 @@ Task( setNx, pin, state )
 {
     if( state )
     {
-        pinMode( pin, OUTPUT ) ;
-        digitalWrite( pin, LOW ) ; // PULL DOWN LED WHEN ON
+        pinMode( GPIO[pin], OUTPUT ) ;
+        digitalWrite( GPIO[pin], LOW ) ; // PULL DOWN LED WHEN ON
     }   
     else
     {
-        pinMode( pin, INPUT_PULLUP ) ;
+        pinMode( GPIO[pin], INPUT_PULLUP ) ;
     }
 }
 
@@ -60,32 +79,23 @@ Task( setLed, pin, state )
     switch( state )
     {
     case OFF:
-        pinMode( pin+firstPin, INPUT ) ;
+        pinMode( GPIO[pin], INPUT ) ;
         break ;
 
     case STRAIGHT:
-        pinMode( pin+firstPin, OUTPUT ) ;
-        digitalWrite( pin+firstPin, LOW ) ;
+        pinMode( GPIO[pin], OUTPUT ) ;
+        digitalWrite( GPIO[pin], LOW ) ;
         break ;
 
     case CURVED:
-        pinMode( pin+firstPin, OUTPUT ) ;
-        digitalWrite( pin+firstPin, HIGH ) ;
+        pinMode( GPIO[pin], OUTPUT ) ;
+        digitalWrite( GPIO[pin], HIGH ) ;
         break ;
     }
 }
 
- // I2C: input request
-void requestEvent()
-{
-    Wire.write( highByte( input ) ) ; // transmitt my own IO when requested
-    Wire.write(  lowByte( input ) ) ;
-}
-
-
 
 //  I2C: command
-
 #define callTask(x,y,z) case x: x##F(firstPin+ y  , z ); break ;
 void receiveEvent( int nBytes )
 {
@@ -101,27 +111,40 @@ void receiveEvent( int nBytes )
     }
 }
 
+ // I2C: input request
+void requestEvent()
+{
+    Wire.write( highByte( input ) ) ; // transmitt my own IO when requested
+    Wire.write(  lowByte( input ) ) ;
+}
+
+
+
 void setup()
 {
     for( int i = 0 ; i < nPins ; i ++ )
     {
-        setIodirF( firstPin + i, 0 ) ;
+        pinMode( GPIO[i], INPUT_PULLUP ) ;
     }
 
     const int addressPins = A7 ;
     int sample = analogRead( addressPins ) ;
+    uint8_t myAddress
 
-    if(      sample >= 100 - 10 && sample <= 100 + 10 ) Wire.begin(1) ; // fix me values please
-    else if( sample >= 200 - 10 && sample <= 200 + 10 ) Wire.begin(2) ;
-    else if( sample >= 300 - 10 && sample <= 300 + 10 ) Wire.begin(3) ;
-    else if( sample >= 400 - 10 && sample <= 400 + 10 ) Wire.begin(4) ;
+    if(      sample >= 100 - 10 && sample <= 100 + 10 ) myAddress = 1 ; // fix me values please
+    else if( sample >= 200 - 10 && sample <= 200 + 10 ) myAddress = 2 ;
+    else if( sample >= 300 - 10 && sample <= 300 + 10 ) myAddress = 3 ;
+    else if( sample >= 400 - 10 && sample <= 400 + 10 ) myAddress = 4 ;
 
+    Wire.begin( myAddress ) ;
     
     Wire.onRequest( requestEvent );
     Wire.onReceive( receiveEvent );
     
     debug.begin( 9600 ) ;
     debug.println("PanelX slave booted") ;
+
+    printNumberln("my address = ", myAddress ) ;
 }
 
 
